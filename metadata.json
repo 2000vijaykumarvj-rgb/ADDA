@@ -1,0 +1,6 @@
+{
+  "name": "Acharya Bangalore B-School (ABBS) — Bengaluru",
+  "description": "Official institutional portal redesign for Acharya Bangalore B-School (ABBS), Bengaluru. Explore MBA, PGDM, BBA, BCA, B.Com, B.Sc., BA, and Ph.D. programs, admissions, placements, research, and campus life.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
