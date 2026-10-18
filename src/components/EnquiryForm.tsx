@@ -1,3 +1,4 @@
+import { supabase } from '../lib/supabase';
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CheckCircle2, AlertCircle, Loader2, PhoneCall, Mail } from 'lucide-react';
@@ -117,7 +118,48 @@ export const EnquiryForm: React.FC<EnquiryFormProps> = ({
       setTimeout(() => {
         containerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }, 50);
-    } catch {
+    } catch (apiErr) {
+      console.warn('API error, falling back directly to Supabase...', apiErr);
+      try {
+        const seq = Math.floor(1000 + Math.random() * 9000);
+        const refId = 'ABBS-ENQ-' + new Date().getFullYear() + '-' + seq;
+        const { error: sbError } = await supabase.from('applications').insert({
+          reference_id: refId,
+          full_name: formData.fullName.trim(),
+          email: formData.email.trim(),
+          phone: formData.phone.trim(),
+          program_of_interest: formData.programOfInterest.trim(),
+          current_qualification: formData.currentQualification.trim(),
+          preferred_contact_method: formData.preferredContactMethod,
+          campus_visit_requested: Boolean(formData.campusVisitRequested),
+          preferred_visit_date: formData.preferredVisitDate || '',
+          message: formData.message || '',
+          status: 'New',
+          admin_notes: 'Direct Supabase Portal Client',
+          submitted_at: new Date().toISOString(),
+        });
+
+        if (!sbError) {
+          setReceipt({
+            referenceId: refId,
+            submittedAt: new Date().toISOString(),
+            deliveryStatus: 'Recorded in ABBS Admissions Portal',
+            smtpConfigured: false,
+            summary: {
+              fullName: formData.fullName,
+              programOfInterest: formData.programOfInterest,
+              preferredContactMethod: formData.preferredContactMethod,
+              campusVisitRequested: Boolean(formData.campusVisitRequested),
+            },
+          });
+          setTimeout(() => {
+            containerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 50);
+          return;
+        }
+      } catch (sbErr) {
+        console.error('Supabase fallback error:', sbErr);
+      }
       setServerError(
         'Network error while connecting to the ABBS Admissions Server. No enquiry was recorded. Please call +91 9090909090 or email 1234Abc@gmail.com.'
       );

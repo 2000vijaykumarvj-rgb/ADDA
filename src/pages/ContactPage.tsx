@@ -1,3 +1,4 @@
+import { supabase } from '../lib/supabase';
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
@@ -104,7 +105,38 @@ export const ContactPage: React.FC = () => {
         deliveryStatus: data.deliveryStatus,
         summary: data.summary,
       });
-    } catch {
+    } catch (apiErr) {
+      console.warn('API error, falling back directly to Supabase...', apiErr);
+      try {
+        const seq = Math.floor(1000 + Math.random() * 9000);
+        const refId = 'ABBS-CNT-' + new Date().getFullYear() + '-' + seq;
+        const { error: sbError } = await supabase.from('contacts').insert({
+          reference_id: refId,
+          full_name: formData.fullName.trim(),
+          email: formData.email.trim(),
+          phone: formData.phone.trim(),
+          department: formData.department.trim(),
+          inquiry_type: formData.inquiryType.trim(),
+          message: formData.message.trim(),
+          submitted_at: new Date().toISOString(),
+        });
+
+        if (!sbError) {
+          setReceipt({
+            referenceId: refId,
+            submittedAt: new Date().toISOString(),
+            deliveryStatus: 'Recorded in ABBS Admissions Portal',
+            summary: {
+              fullName: formData.fullName,
+              department: formData.department,
+              inquiryType: formData.inquiryType,
+            },
+          });
+          return;
+        }
+      } catch (sbErr) {
+        console.error('Supabase contact fallback error:', sbErr);
+      }
       setServerError(
         'Network error connecting to the ABBS server. Please call +91 9090909090 or email 1234Abc@gmail.com directly.'
       );
