@@ -102,13 +102,14 @@
       "preferredVisitDate": "",
       "message": "",
       "consentAccepted": true,
-      "submittedAt": "2026-10-18T12:27:37.955Z",
-      "deliveryStatus": "Recorded in ABBS Admissions Portal",
       "status": "New",
       "adminNotes": "",
+      "submittedAt": "2026-10-18T12:27:37.955+00:00",
+      "deliveryStatus": "Recorded in ABBS Admissions Portal",
       "supabaseSynced": true
     },
     {
+      "referenceId": "ABBS-ENQ-2026-0007",
       "fullName": "VijayaKumar n",
       "email": "2000VIJAY.KUMAR.VJ@GMAIL.COM",
       "phone": "+917406868005",
@@ -119,12 +120,29 @@
       "preferredVisitDate": "",
       "message": "",
       "consentAccepted": true,
-      "referenceId": "ABBS-ENQ-2026-0007",
-      "submittedAt": "2026-10-18T12:29:44.962Z",
       "status": "New",
       "adminNotes": "",
-      "supabaseSynced": true,
-      "deliveryStatus": "Recorded in ABBS Admissions Portal"
+      "submittedAt": "2026-10-18T12:29:44.962+00:00",
+      "deliveryStatus": "Recorded in ABBS Admissions Portal",
+      "supabaseSynced": true
+    },
+    {
+      "referenceId": "ABBS-ENQ-2026-9150",
+      "fullName": "poornima n",
+      "email": "2000VIJAY.KUMAR.VJ@GMAIL.COM",
+      "phone": "+917406868005",
+      "programOfInterest": "Master of Business Administration (MBA)",
+      "currentQualification": "10+2 / II PUC Appearing or Completed",
+      "preferredContactMethod": "Phone",
+      "campusVisitRequested": false,
+      "preferredVisitDate": "",
+      "message": "",
+      "consentAccepted": true,
+      "status": "New",
+      "adminNotes": "Direct Supabase Portal Client",
+      "submittedAt": "2026-10-18T12:31:51.545+00:00",
+      "deliveryStatus": "Recorded in ABBS Admissions Portal",
+      "supabaseSynced": true
     }
   ],
   "contacts": []
