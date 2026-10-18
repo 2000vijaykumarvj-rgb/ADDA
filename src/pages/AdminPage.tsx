@@ -1,3 +1,4 @@
+import { MiniDatePicker } from '../components/MiniDatePicker';
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Lock,
@@ -798,30 +799,24 @@ export const AdminPage: React.FC = () => {
                       </button>
                     </div>
 
-                    {/* Start Date & End Date Pickers */}
-                    <div className="flex items-center gap-1.5 bg-[#FAF8F5] border border-stone-300 px-2.5 py-1 text-[11px]">
-                      <span className="text-stone-500 font-medium">From:</span>
-                      <input
-                        type="date"
-                        aria-label="Filter start date"
+                    {/* Start Date & End Date Pickers with DD/MM/YYYY and Interactive Calendar Popup */}
+                    <div className="flex items-center gap-1.5">
+                      <MiniDatePicker
+                        label="From"
                         value={startDate}
-                        onChange={(e) => {
-                          setStartDate(e.target.value);
+                        onChange={(iso) => {
+                          setStartDate(iso);
                           setDatePreset('custom');
                         }}
-                        className="bg-transparent text-stone-800 focus:outline-none cursor-pointer"
                       />
-                      <span className="text-stone-400">→</span>
-                      <span className="text-stone-500 font-medium">To:</span>
-                      <input
-                        type="date"
-                        aria-label="Filter end date"
+                      <span className="text-stone-400 font-bold">→</span>
+                      <MiniDatePicker
+                        label="To"
                         value={endDate}
-                        onChange={(e) => {
-                          setEndDate(e.target.value);
+                        onChange={(iso) => {
+                          setEndDate(iso);
                           setDatePreset('custom');
                         }}
-                        className="bg-transparent text-stone-800 focus:outline-none cursor-pointer"
                       />
                     </div>
                   </div>
