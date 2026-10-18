@@ -295,7 +295,7 @@ async function startServer() {
       res.status(500).json({
         ok: false,
         message:
-          'Unable to persist enquiry on the server. Please call +91 91417 07070 or email admissions@abbs.edu.in directly.',
+          'Unable to persist enquiry on the server. Please call +91 9090909090 or email 1234Abc@gmail.com directly.',
         error: err instanceof Error ? err.message : 'Unknown error',
       });
     }
@@ -364,7 +364,7 @@ async function startServer() {
       res.status(500).json({
         ok: false,
         message:
-          'Server storage failed. Please contact admissions@abbs.edu.in or +91 91417 07070 directly.',
+          'Server storage failed. Please contact 1234Abc@gmail.com or +91 9090909090 directly.',
         error: err instanceof Error ? err.message : 'Unknown error',
       });
     }

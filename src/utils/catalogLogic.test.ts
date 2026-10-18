@@ -160,7 +160,7 @@ test('validateContactForm validates message length and contact fields', () => {
   const shortMsg = validateContactForm({
     fullName: 'Vikram Sharma',
     email: 'vikram@example.com',
-    phone: '+91 91417 07070',
+    phone: '+91 9090909090',
     department: 'Admissions Office',
     inquiryType: 'Campus Visit',
     message: 'Too short',
@@ -173,7 +173,7 @@ test('validateContactForm validates message length and contact fields', () => {
   const validContact = validateContactForm({
     fullName: 'Vikram Sharma',
     email: 'vikram@example.com',
-    phone: '+91 91417 07070',
+    phone: '+91 9090909090',
     department: 'Admissions Office',
     inquiryType: 'Campus Visit',
     message: 'I would like to schedule a guided campus tour on Friday morning.',

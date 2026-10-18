@@ -35,7 +35,7 @@ export const INITIAL_ANNOUNCEMENTS: AnnouncementConfig[] = [
       'Prospective students and parents are invited to visit the ABBS Campus on Andrahalli Main Road, Off Magadi Road, Bengaluru.',
     ctaLabel: 'Book Campus Visit',
     ctaLink: '/contact#visit-form',
-    verificationNote: 'Prior appointment recommended via +91 91417 07070 or admissions@abbs.edu.in.',
+    verificationNote: 'Prior appointment recommended via +91 9090909090 or 1234Abc@gmail.com.',
   },
 ];
 
@@ -85,13 +85,13 @@ export const OFFICIAL_CONTACT = {
   addressLine1: 'Andrahalli Main Road, Off Magadi Road',
   addressLine2: 'Bengaluru, Karnataka 560091, India',
   fullAddress: 'Andrahalli Main Road, Off Magadi Road, Bengaluru, Karnataka 560091, India',
-  phones: ['+91 91417 07070', '+91 80 2324 5516'],
-  primaryPhoneTel: '+919141707070',
+  phones: ['+91 9090909090', '+91 80 2324 5516'],
+  primaryPhoneTel: '+919090909090',
   secondaryPhoneTel: '+918023245516',
-  email: 'admissions@abbs.edu.in',
+  email: '1234Abc@gmail.com',
   website: 'https://www.abbs.edu.in/',
   officeHoursNote:
-    'Office visiting hours are subject to academic calendar schedules. Please call +91 91417 07070 prior to visiting.',
+    'Office visiting hours are subject to academic calendar schedules. Please call +91 9090909090 prior to visiting.',
   googleMapsDirectionsUrl:
     'https://www.google.com/maps/search/?api=1&query=Acharya+Bangalore+B-School+Andrahalli+Main+Road+Bengaluru+560091',
 };
@@ -190,7 +190,7 @@ export const ACADEMIC_PROGRAMS: AcademicProgram[] = [
       {
         question: 'Where can I obtain the verified fee structure for the current academic intake?',
         answer:
-          'Tuition fees vary between Government Quota (PGCET) and Management Quota seats. Please submit an enquiry or contact admissions@abbs.edu.in for the official signed fee schedule.',
+          'Tuition fees vary between Government Quota (PGCET) and Management Quota seats. Please submit an enquiry or contact 1234Abc@gmail.com for the official signed fee schedule.',
       },
     ],
     visualTheme: 'management',
@@ -660,7 +660,7 @@ export const ACADEMIC_PROGRAMS: AcademicProgram[] = [
       {
         question: 'Are ACCA or CMA examination registration fees included in tuition?',
         answer:
-          'Fee structures for ACCA, CMA, and Fintech tracks differ based on coaching modules and external professional body fees. Please request the detailed B.Com track fee sheet from admissions@abbs.edu.in.',
+          'Fee structures for ACCA, CMA, and Fintech tracks differ based on coaching modules and external professional body fees. Please request the detailed B.Com track fee sheet from 1234Abc@gmail.com.',
       },
     ],
     visualTheme: 'bcom',

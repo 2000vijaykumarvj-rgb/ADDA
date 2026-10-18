@@ -92,7 +92,7 @@ export const ContactPage: React.FC = () => {
         }
         setServerError(
           data.message ||
-            'Could not record your message. Please call +91 91417 07070 or email admissions@abbs.edu.in.'
+            'Could not record your message. Please call +91 9090909090 or email 1234Abc@gmail.com.'
         );
         setIsSubmitting(false);
         return;
@@ -106,7 +106,7 @@ export const ContactPage: React.FC = () => {
       });
     } catch {
       setServerError(
-        'Network error connecting to the ABBS server. Please call +91 91417 07070 or email admissions@abbs.edu.in directly.'
+        'Network error connecting to the ABBS server. Please call +91 9090909090 or email 1234Abc@gmail.com directly.'
       );
     } finally {
       setIsSubmitting(false);
@@ -117,7 +117,7 @@ export const ContactPage: React.FC = () => {
     <>
       <SEOHead
         title="Contact Us & Campus Directions | Acharya Bangalore B-School (ABBS)"
-        description="Contact Acharya Bangalore B-School (ABBS) at Andrahalli Main Road, Off Magadi Road, Bengaluru 560091. Call +91 91417 07070 or email admissions@abbs.edu.in."
+        description="Contact Acharya Bangalore B-School (ABBS) at Andrahalli Main Road, Off Magadi Road, Bengaluru 560091. Call +91 9090909090 or email 1234Abc@gmail.com."
       />
 
       {/* Page Hero */}

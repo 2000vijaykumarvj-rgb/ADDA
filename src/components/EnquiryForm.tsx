@@ -101,7 +101,7 @@ export const EnquiryForm: React.FC<EnquiryFormProps> = ({
         }
         setServerError(
           data.message ||
-            'The server could not confirm your submission. Please verify your inputs or contact admissions@abbs.edu.in directly.'
+            'The server could not confirm your submission. Please verify your inputs or contact 1234Abc@gmail.com directly.'
         );
         setIsSubmitting(false);
         return;
@@ -119,7 +119,7 @@ export const EnquiryForm: React.FC<EnquiryFormProps> = ({
       }, 50);
     } catch {
       setServerError(
-        'Network error while connecting to the ABBS Admissions Server. No enquiry was recorded. Please call +91 91417 07070 or email admissions@abbs.edu.in.'
+        'Network error while connecting to the ABBS Admissions Server. No enquiry was recorded. Please call +91 9090909090 or email 1234Abc@gmail.com.'
       );
     } finally {
       setIsSubmitting(false);

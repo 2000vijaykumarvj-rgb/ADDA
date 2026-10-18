@@ -308,12 +308,12 @@ export const GENERAL_ADMISSIONS_FAQS = [
   {
     question: 'How do I verify the exact tuition fees and scholarship eligibility for my program?',
     answer:
-      'To ensure accuracy and prevent outdated fee figures, ABBS provides official program-wise fee schedules directly through the Admissions Office. Submit the online Admissions Enquiry Form on this page or email admissions@abbs.edu.in to receive the verified fee structure for your chosen course and quota.',
+      'To ensure accuracy and prevent outdated fee figures, ABBS provides official program-wise fee schedules directly through the Admissions Office. Submit the online Admissions Enquiry Form on this page or email 1234Abc@gmail.com to receive the verified fee structure for your chosen course and quota.',
   },
   {
     question: 'Can I book an in-person campus visit before submitting my application?',
     answer:
-      'Absolutely. Students and parents are encouraged to visit the campus at Andrahalli Main Road, Off Magadi Road, Bengaluru 560091. You can check the "Request Campus Visit" option in our enquiry form or call +91 91417 07070 to arrange a guided tour of the classrooms, laboratories, library, and hostels.',
+      'Absolutely. Students and parents are encouraged to visit the campus at Andrahalli Main Road, Off Magadi Road, Bengaluru 560091. You can check the "Request Campus Visit" option in our enquiry form or call +91 9090909090 to arrange a guided tour of the classrooms, laboratories, library, and hostels.',
   },
   {
     question: 'Which entrance exams are accepted for MBA and PGDM admissions?',
