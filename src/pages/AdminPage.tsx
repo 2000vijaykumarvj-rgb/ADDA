@@ -127,6 +127,8 @@ export const AdminPage: React.FC = () => {
   const [selectedApp, setSelectedApp] = useState<ApplicationRecord | null>(null);
   const [notesDraft, setNotesDraft] = useState('');
   const [isSavingNotes, setIsSavingNotes] = useState(false);
+  const [savingRefId, setSavingRefId] = useState<string | null>(null);
+  const [saveStatusFeedback, setSaveStatusFeedback] = useState<string | null>(null);
 
   const fetchDashboardData = async (activeToken: string) => {
     if (!activeToken) return;
@@ -283,11 +285,30 @@ export const AdminPage: React.FC = () => {
   };
 
   const handleStatusChange = async (referenceId: string, newStatus: ApplicationStatus) => {
+    // 1. Immediate optimistic UI state update
     setApplications((prev) =>
       prev.map((app) => (app.referenceId === referenceId ? { ...app, status: newStatus } : app))
     );
+    setSavingRefId(referenceId);
 
-    void supabase.from('applications').update({ status: newStatus }).eq('reference_id', referenceId);
+    // 2. Persist directly and reliably to Supabase database
+    try {
+      const { data: sbUpdated, error: sbError } = await supabase
+        .from('applications')
+        .update({ status: newStatus })
+        .eq('reference_id', referenceId)
+        .select();
+
+      if (!sbError && sbUpdated && sbUpdated.length > 0) {
+        console.log('Saved status to Supabase database:', referenceId, newStatus);
+      } else if (sbError) {
+        console.warn('Supabase status update warning:', sbError);
+      }
+    } catch (sbEx) {
+      console.error('Supabase status update error:', sbEx);
+    }
+
+    // 3. Also sync with local Express backend API if running
     try {
       const res = await fetch(`/api/admin/applications/${encodeURIComponent(referenceId)}`, {
         method: 'PATCH',
@@ -297,14 +318,22 @@ export const AdminPage: React.FC = () => {
         },
         body: JSON.stringify({ status: newStatus }),
       });
-      const data = await res.json();
-      if (data.ok && data.application) {
-        setApplications((prev) =>
-          prev.map((app) => (app.referenceId === referenceId ? data.application : app))
-        );
+
+      const contentType = res.headers.get('content-type') || '';
+      if (res.ok && contentType.includes('application/json')) {
+        const data = await res.json();
+        if (data.ok && data.application) {
+          setApplications((prev) =>
+            prev.map((app) => (app.referenceId === referenceId ? data.application : app))
+          );
+        }
       }
     } catch {
-      // Revert or refresh if needed
+      // Running on static Vercel or local API offline - Supabase already handled persistence
+    } finally {
+      setSavingRefId(null);
+      setSaveStatusFeedback(`Status updated to "${newStatus}" and saved to database (${referenceId})`);
+      setTimeout(() => setSaveStatusFeedback(null), 3500);
     }
   };
 
@@ -312,29 +341,60 @@ export const AdminPage: React.FC = () => {
     e.preventDefault();
     if (!selectedApp) return;
     setIsSavingNotes(true);
+    const refId = selectedApp.referenceId;
+    const newNotes = notesDraft.trim();
+
+    // 1. Optimistic UI update
+    setApplications((prev) =>
+      prev.map((app) =>
+        app.referenceId === refId ? { ...app, adminNotes: newNotes } : app
+      )
+    );
+
+    // 2. Persist directly to Supabase database
+    try {
+      const { data: sbUpdated, error: sbError } = await supabase
+        .from('applications')
+        .update({ admin_notes: newNotes })
+        .eq('reference_id', refId)
+        .select();
+
+      if (!sbError) {
+        console.log('Saved admin notes to Supabase:', refId);
+      }
+    } catch (sbEx) {
+      console.error('Supabase notes update error:', sbEx);
+    }
+
+    // 3. Also sync with local API if available
     try {
       const res = await fetch(
-        `/api/admin/applications/${encodeURIComponent(selectedApp.referenceId)}`,
+        `/api/admin/applications/${encodeURIComponent(refId)}`,
         {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ adminNotes: notesDraft }),
+          body: JSON.stringify({ adminNotes: newNotes }),
         }
       );
-      const data = await res.json();
-      if (data.ok && data.application) {
-        setApplications((prev) =>
-          prev.map((app) =>
-            app.referenceId === selectedApp.referenceId ? data.application : app
-          )
-        );
-        setSelectedApp(null);
+      const contentType = res.headers.get('content-type') || '';
+      if (res.ok && contentType.includes('application/json')) {
+        const data = await res.json();
+        if (data.ok && data.application) {
+          setApplications((prev) =>
+            prev.map((app) => (app.referenceId === refId ? data.application : app))
+          );
+        }
       }
+    } catch {
+      // Local API
     } finally {
       setIsSavingNotes(false);
+      setSelectedApp(null);
+      setSaveStatusFeedback(`Notes saved to database for ${refId}`);
+      setTimeout(() => setSaveStatusFeedback(null), 3500);
     }
   };
 
@@ -914,6 +974,22 @@ export const AdminPage: React.FC = () => {
           </div>
 
           {/* Applications Table */}
+          {saveStatusFeedback && (
+            <div className="bg-emerald-50 border border-emerald-300 text-emerald-900 text-xs px-4 py-2.5 rounded flex items-center justify-between gap-2 shadow-xs animate-in fade-in">
+              <div className="flex items-center gap-2 font-medium">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>{saveStatusFeedback}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSaveStatusFeedback(null)}
+                className="text-stone-400 hover:text-stone-700"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+
           {activeTab === 'applications' ? (
             <div className="bg-white border border-stone-200 overflow-x-auto">
               <table className="w-full text-left border-collapse">

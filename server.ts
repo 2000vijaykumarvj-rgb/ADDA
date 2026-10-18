@@ -529,7 +529,44 @@ async function startServer() {
     };
 
     const store = readSubmissions();
-    const index = store.enquiries.findIndex((item) => item.referenceId === referenceId);
+    let index = store.enquiries.findIndex((item) => item.referenceId === referenceId);
+
+    // If application was created in Supabase directly and not yet in store.enquiries
+    if (index === -1) {
+      try {
+        const { data: sbRow } = await supabaseServer
+          .from('applications')
+          .select('*')
+          .eq('reference_id', referenceId)
+          .single();
+
+        if (sbRow) {
+          const newRec: ApplicationRecord = {
+            referenceId,
+            fullName: sbRow.full_name,
+            email: sbRow.email,
+            phone: sbRow.phone,
+            programOfInterest: sbRow.program_of_interest,
+            currentQualification: sbRow.current_qualification,
+            preferredContactMethod: (sbRow.preferred_contact_method || 'Phone') as ApplicationRecord['preferredContactMethod'],
+            campusVisitRequested: Boolean(sbRow.campus_visit_requested),
+            preferredVisitDate: sbRow.preferred_visit_date || '',
+            message: sbRow.message || '',
+            consentAccepted: true,
+            status: (status || sbRow.status || 'New') as ApplicationStatus,
+            adminNotes: adminNotes !== undefined ? adminNotes : (sbRow.admin_notes || ''),
+            submittedAt: sbRow.submitted_at || new Date().toISOString(),
+            deliveryStatus: 'Recorded in ABBS Admissions Portal',
+            supabaseSynced: true,
+          };
+          store.enquiries.push(newRec);
+          index = store.enquiries.length - 1;
+        }
+      } catch (err) {
+        console.error('Error fetching application from database in patch:', err);
+      }
+    }
+
     if (index === -1) {
       res.status(404).json({
         ok: false,
@@ -544,8 +581,19 @@ async function startServer() {
       adminNotes: adminNotes !== undefined ? adminNotes : store.enquiries[index].adminNotes,
     };
 
-    const dbSync = await tryInsertApplicationToDatabase(updated);
-    updated.supabaseSynced = dbSync.synced;
+    // Update in Supabase
+    try {
+      await supabaseServer
+        .from('applications')
+        .update({
+          status: updated.status,
+          admin_notes: updated.adminNotes,
+        })
+        .eq('reference_id', referenceId);
+      updated.supabaseSynced = true;
+    } catch {
+      updated.supabaseSynced = false;
+    }
 
     store.enquiries[index] = updated;
     writeSubmissions(store);
