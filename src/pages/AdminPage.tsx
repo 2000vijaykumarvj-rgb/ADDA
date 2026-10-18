@@ -4,6 +4,12 @@ import {
   RefreshCw,
   Download,
   Search,
+  Calendar,
+  ArrowUpDown,
+  SlidersHorizontal,
+  Star,
+  Filter,
+  RotateCcw,
   CheckCircle2,
   AlertCircle,
   LogOut,
@@ -21,6 +27,8 @@ import {
   type ApplicationRecord,
   type ApplicationStatus,
   type ContactFormInput,
+  type SearchTargetField,
+  type SortOption,
 } from '../utils/catalogLogic';
 import { ACADEMIC_PROGRAMS } from '../data/abbsData';
 import { SEOHead } from '../components/SEOHead';
@@ -64,6 +72,55 @@ export const AdminPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('All');
   const [programFilter, setProgramFilter] = useState<string>('All');
+  const [searchField, setSearchField] = useState<SearchTargetField>('all');
+  const [datePreset, setDatePreset] = useState<'all' | 'today' | 'yesterday' | '7days' | '30days' | 'custom'>('all');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [sortBy, setSortBy] = useState<SortOption>('newest');
+
+  const handleDatePreset = (preset: 'all' | 'today' | 'yesterday' | '7days' | '30days' | 'custom') => {
+    setDatePreset(preset);
+    const now = new Date();
+    const toISODate = (d: Date) => {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
+    if (preset === 'all') {
+      setStartDate('');
+      setEndDate('');
+    } else if (preset === 'today') {
+      const todayStr = toISODate(now);
+      setStartDate(todayStr);
+      setEndDate(todayStr);
+    } else if (preset === 'yesterday') {
+      const y = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      const yStr = toISODate(y);
+      setStartDate(yStr);
+      setEndDate(yStr);
+    } else if (preset === '7days') {
+      const past7 = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      setStartDate(toISODate(past7));
+      setEndDate(toISODate(now));
+    } else if (preset === '30days') {
+      const past30 = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      setStartDate(toISODate(past30));
+      setEndDate(toISODate(now));
+    }
+  };
+
+  const handleClearFilters = () => {
+    setSearchQuery('');
+    setSearchField('all');
+    setStatusFilter('All');
+    setProgramFilter('All');
+    setDatePreset('all');
+    setStartDate('');
+    setEndDate('');
+    setSortBy('newest');
+  };
 
   // Selected Applicant Modal for Notes & Details
   const [selectedApp, setSelectedApp] = useState<ApplicationRecord | null>(null);
@@ -297,10 +354,14 @@ export const AdminPage: React.FC = () => {
     () =>
       filterApplications(applications, {
         searchQuery,
+        searchField,
         statusFilter,
         programFilter,
+        startDate,
+        endDate,
+        sortBy,
       }),
-    [applications, searchQuery, statusFilter, programFilter]
+    [applications, searchQuery, searchField, statusFilter, programFilter, startDate, endDate, sortBy]
   );
 
   const metrics = useMemo(() => computeApplicationMetrics(applications), [applications]);
@@ -502,14 +563,30 @@ export const AdminPage: React.FC = () => {
               <div className="text-xs text-stone-500 mt-1">Awaiting counselor action</div>
             </div>
 
-            <div className="p-6 border-r border-b border-stone-200 bg-[#FAF8F5]/60">
-              <div className="text-xs uppercase tracking-wider text-stone-500 font-semibold">
-                Shortlisted &amp; Admitted
+            <div
+              onClick={() => setStatusFilter(statusFilter === 'Shortlisted' ? 'All' : 'Shortlisted')}
+              className={`p-6 border-r border-b border-stone-200 cursor-pointer transition-all duration-150 ${
+                statusFilter === 'Shortlisted'
+                  ? 'bg-amber-50/80 ring-2 ring-amber-500'
+                  : 'bg-[#FAF8F5]/60 hover:bg-amber-50/40'
+              }`}
+              title="Click to filter by Shortlisted status"
+            >
+              <div className="flex items-center justify-between text-xs uppercase tracking-wider text-stone-500 font-semibold">
+                <span className="flex items-center gap-1 text-[#0B192C]">
+                  <Star className="w-3.5 h-3.5 text-[#B48327] fill-[#B48327]" />
+                  Shortlisted &amp; Admitted
+                </span>
+                {statusFilter === 'Shortlisted' && (
+                  <span className="text-[10px] bg-[#B48327] text-white px-1.5 py-0.5 rounded font-mono font-normal">Active Filter</span>
+                )}
               </div>
               <div className="text-3xl font-serif font-bold text-emerald-800 font-mono-tabular mt-1">
                 {metrics.shortlistedOrAdmittedCount}
               </div>
-              <div className="text-xs text-stone-500 mt-1">Qualified for interview / admission</div>
+              <div className="text-xs text-stone-500 mt-1">
+                {statusFilter === 'Shortlisted' ? 'Click to show all applications' : 'Click to filter Shortlisted applicants'}
+              </div>
             </div>
 
             <div className="p-6 border-r border-b border-stone-200 bg-[#FAF8F5]/60">
@@ -568,61 +645,274 @@ export const AdminPage: React.FC = () => {
             </div>
 
             {activeTab === 'applications' && (
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                <div className="md:col-span-5 relative">
-                  <label htmlFor="admin-search" className="sr-only">
-                    Search applicants by name, email, phone, or reference ID
-                  </label>
-                  <Search
-                    className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
-                    aria-hidden="true"
-                  />
-                  <input
-                    id="admin-search"
-                    type="text"
-                    placeholder="Search name, email, phone, or ABBS-ENQ reference..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 text-xs bg-[#FAF8F5] border border-stone-300 text-stone-900 focus:border-[#0B192C] focus:outline-none"
-                  />
+              <div className="space-y-4">
+                {/* Row 1: Search Scope + Search Input + Status Filter + Program Filter */}
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+                  {/* Search Type Selector + Input */}
+                  <div className="md:col-span-6 flex items-stretch">
+                    <select
+                      id="admin-search-field"
+                      aria-label="Select search field"
+                      value={searchField}
+                      onChange={(e) => setSearchField(e.target.value as SearchTargetField)}
+                      className="px-2.5 py-2 text-xs font-semibold bg-[#0B192C] text-stone-100 border border-[#0B192C] focus:outline-none shrink-0 cursor-pointer"
+                    >
+                      <option value="all">Search: All Fields</option>
+                      <option value="name">Search by Name</option>
+                      <option value="phone">Search by Phone</option>
+                      <option value="email">Search by Email</option>
+                      <option value="referenceId">Search by Ref ID</option>
+                    </select>
+
+                    <div className="relative flex-1">
+                      <Search
+                        className="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                        aria-hidden="true"
+                      />
+                      <input
+                        id="admin-search"
+                        type="text"
+                        placeholder={
+                          searchField === 'name'
+                            ? 'Search by applicant name...'
+                            : searchField === 'phone'
+                            ? 'Search by phone number (e.g. 917406868005)...'
+                            : searchField === 'email'
+                            ? 'Search by email address...'
+                            : searchField === 'referenceId'
+                            ? 'Search by reference ID (e.g. ABBS-ENQ-2026-0001)...'
+                            : 'Search name, phone, email, reference ID...'
+                        }
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full pl-9 pr-8 py-2 text-xs bg-[#FAF8F5] border border-l-0 border-stone-300 text-stone-900 focus:border-[#0B192C] focus:outline-none h-full"
+                      />
+                      {searchQuery && (
+                        <button
+                          type="button"
+                          onClick={() => setSearchQuery('')}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700"
+                          title="Clear search"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Status Filter */}
+                  <div className="md:col-span-3">
+                    <select
+                      id="admin-status-filter"
+                      aria-label="Filter by application status"
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                      className="w-full px-3 py-2 text-xs bg-[#FAF8F5] border border-stone-300 text-stone-800 focus:border-[#0B192C] focus:outline-none"
+                    >
+                      <option value="All">All Statuses ({applications.length})</option>
+                      {STATUS_OPTIONS.map((st) => {
+                        const count = applications.filter((a) => a.status === st).length;
+                        return (
+                          <option key={st} value={st}>
+                            {st === 'Shortlisted' ? '⭐ Shortlisted' : st} ({count})
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+
+                  {/* Academic Program Filter */}
+                  <div className="md:col-span-3">
+                    <select
+                      id="admin-program-filter"
+                      aria-label="Filter by academic program"
+                      value={programFilter}
+                      onChange={(e) => setProgramFilter(e.target.value)}
+                      className="w-full px-3 py-2 text-xs bg-[#FAF8F5] border border-stone-300 text-stone-800 focus:border-[#0B192C] focus:outline-none"
+                    >
+                      <option value="All">All Academic Programs</option>
+                      {ACADEMIC_PROGRAMS.map((p) => (
+                        <option key={p.slug} value={p.title}>
+                          {p.shortTitle}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
-                <div className="md:col-span-3">
-                  <label htmlFor="admin-status-filter" className="sr-only">
-                    Filter by application status
-                  </label>
-                  <select
-                    id="admin-status-filter"
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    className="w-full px-3 py-2 text-xs bg-[#FAF8F5] border border-stone-300 text-stone-800"
-                  >
-                    <option value="All">All Statuses</option>
-                    {STATUS_OPTIONS.map((st) => (
-                      <option key={st} value={st}>
-                        Status: {st}
-                      </option>
-                    ))}
-                  </select>
+                {/* Row 2: Date Filtering (Day-by-Day / Start Date to End Date) + Sorting ("Sort list") */}
+                <div className="pt-2 border-t border-stone-100 flex flex-wrap items-center justify-between gap-3 text-xs">
+                  {/* Date Filtering Controls */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-stone-500 font-semibold inline-flex items-center gap-1">
+                      <Calendar className="w-3.5 h-3.5 text-[#B48327]" />
+                      Date Filter:
+                    </span>
+
+                    {/* Quick Date Presets */}
+                    <div className="inline-flex rounded border border-stone-300 bg-[#FAF8F5] p-0.5">
+                      <button
+                        type="button"
+                        onClick={() => handleDatePreset('all')}
+                        className={`px-2.5 py-1 text-[11px] font-medium rounded-sm cursor-pointer ${
+                          datePreset === 'all' ? 'bg-[#0B192C] text-white' : 'text-stone-700 hover:text-black'
+                        }`}
+                      >
+                        All Dates
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDatePreset('today')}
+                        className={`px-2.5 py-1 text-[11px] font-medium rounded-sm cursor-pointer ${
+                          datePreset === 'today' ? 'bg-[#0B192C] text-white' : 'text-stone-700 hover:text-black'
+                        }`}
+                      >
+                        Today
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDatePreset('yesterday')}
+                        className={`px-2.5 py-1 text-[11px] font-medium rounded-sm cursor-pointer ${
+                          datePreset === 'yesterday' ? 'bg-[#0B192C] text-white' : 'text-stone-700 hover:text-black'
+                        }`}
+                      >
+                        Yesterday
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDatePreset('7days')}
+                        className={`px-2.5 py-1 text-[11px] font-medium rounded-sm cursor-pointer ${
+                          datePreset === '7days' ? 'bg-[#0B192C] text-white' : 'text-stone-700 hover:text-black'
+                        }`}
+                      >
+                        Last 7 Days
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDatePreset('custom')}
+                        className={`px-2.5 py-1 text-[11px] font-medium rounded-sm cursor-pointer ${
+                          datePreset === 'custom' ? 'bg-[#0B192C] text-white' : 'text-stone-700 hover:text-black'
+                        }`}
+                      >
+                        Custom Day / Range
+                      </button>
+                    </div>
+
+                    {/* Start Date & End Date Pickers */}
+                    <div className="flex items-center gap-1.5 bg-[#FAF8F5] border border-stone-300 px-2.5 py-1 text-[11px]">
+                      <span className="text-stone-500 font-medium">From:</span>
+                      <input
+                        type="date"
+                        aria-label="Filter start date"
+                        value={startDate}
+                        onChange={(e) => {
+                          setStartDate(e.target.value);
+                          setDatePreset('custom');
+                        }}
+                        className="bg-transparent text-stone-800 focus:outline-none cursor-pointer"
+                      />
+                      <span className="text-stone-400">→</span>
+                      <span className="text-stone-500 font-medium">To:</span>
+                      <input
+                        type="date"
+                        aria-label="Filter end date"
+                        value={endDate}
+                        onChange={(e) => {
+                          setEndDate(e.target.value);
+                          setDatePreset('custom');
+                        }}
+                        className="bg-transparent text-stone-800 focus:outline-none cursor-pointer"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Sorting List Dropdown */}
+                  <div className="flex items-center gap-2 ml-auto">
+                    <span className="text-stone-500 font-semibold inline-flex items-center gap-1">
+                      <ArrowUpDown className="w-3.5 h-3.5 text-[#B48327]" />
+                      Sort List:
+                    </span>
+                    <select
+                      id="admin-sort-by"
+                      aria-label="Sort applications"
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value as SortOption)}
+                      className="px-2.5 py-1 text-xs bg-[#FAF8F5] border border-stone-300 text-stone-800 focus:border-[#0B192C] focus:outline-none cursor-pointer"
+                    >
+                      <option value="newest">Submission Date: Newest First</option>
+                      <option value="oldest">Submission Date: Oldest First</option>
+                      <option value="shortlisted-first">⭐ Shortlisted Applicants First</option>
+                      <option value="name-asc">Applicant Name: A to Z</option>
+                      <option value="name-desc">Applicant Name: Z to A</option>
+                    </select>
+                  </div>
                 </div>
 
-                <div className="md:col-span-4">
-                  <label htmlFor="admin-program-filter" className="sr-only">
-                    Filter by academic program
-                  </label>
-                  <select
-                    id="admin-program-filter"
-                    value={programFilter}
-                    onChange={(e) => setProgramFilter(e.target.value)}
-                    className="w-full px-3 py-2 text-xs bg-[#FAF8F5] border border-stone-300 text-stone-800"
-                  >
-                    <option value="All">All Academic Programs</option>
-                    {ACADEMIC_PROGRAMS.map((p) => (
-                      <option key={p.slug} value={p.title}>
-                        {p.shortTitle}
-                      </option>
-                    ))}
-                  </select>
+                {/* Row 3: Quick Filter Chips (Shortlisted, Admitted, Today) + Active Filters Indicator */}
+                <div className="pt-2 border-t border-stone-100 flex flex-wrap items-center justify-between gap-2 text-xs">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-[11px] text-stone-400 uppercase tracking-wider font-semibold mr-1">Quick Filters:</span>
+                    <button
+                      type="button"
+                      onClick={() => setStatusFilter(statusFilter === 'Shortlisted' ? 'All' : 'Shortlisted')}
+                      className={`px-2.5 py-1 text-[11px] font-semibold rounded-full border inline-flex items-center gap-1 cursor-pointer transition-colors ${
+                        statusFilter === 'Shortlisted'
+                          ? 'bg-amber-600 text-white border-amber-600'
+                          : 'bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100'
+                      }`}
+                    >
+                      <Star className="w-3 h-3 fill-current" />
+                      Shortlisted Only ({applications.filter((a) => a.status === 'Shortlisted').length})
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setStatusFilter(statusFilter === 'Admitted' ? 'All' : 'Admitted')}
+                      className={`px-2.5 py-1 text-[11px] font-semibold rounded-full border inline-flex items-center gap-1 cursor-pointer transition-colors ${
+                        statusFilter === 'Admitted'
+                          ? 'bg-emerald-700 text-white border-emerald-700'
+                          : 'bg-emerald-50 text-emerald-900 border-emerald-300 hover:bg-emerald-100'
+                      }`}
+                    >
+                      Admitted ({applications.filter((a) => a.status === 'Admitted').length})
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setStatusFilter(statusFilter === 'New' ? 'All' : 'New')}
+                      className={`px-2.5 py-1 text-[11px] font-semibold rounded-full border inline-flex items-center gap-1 cursor-pointer transition-colors ${
+                        statusFilter === 'New'
+                          ? 'bg-[#0B192C] text-white border-[#0B192C]'
+                          : 'bg-stone-100 text-stone-800 border-stone-300 hover:bg-stone-200'
+                      }`}
+                    >
+                      New ({applications.filter((a) => a.status === 'New').length})
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleDatePreset(datePreset === 'today' ? 'all' : 'today')}
+                      className={`px-2.5 py-1 text-[11px] font-semibold rounded-full border inline-flex items-center gap-1 cursor-pointer transition-colors ${
+                        datePreset === 'today'
+                          ? 'bg-blue-700 text-white border-blue-700'
+                          : 'bg-blue-50 text-blue-900 border-blue-200 hover:bg-blue-100'
+                      }`}
+                    >
+                      📅 Submitted Today
+                    </button>
+                  </div>
+
+                  {/* Reset All Filters Button */}
+                  {(searchQuery || statusFilter !== 'All' || programFilter !== 'All' || startDate || endDate || sortBy !== 'newest') && (
+                    <button
+                      type="button"
+                      onClick={handleClearFilters}
+                      className="text-stone-600 hover:text-red-700 text-[11px] font-semibold inline-flex items-center gap-1 px-2.5 py-1 bg-stone-100 hover:bg-red-50 border border-stone-300 hover:border-red-300 rounded cursor-pointer transition-colors"
+                    >
+                      <RotateCcw className="w-3 h-3 text-stone-500" />
+                      Reset All Filters
+                    </button>
+                  )}
                 </div>
               </div>
             )}
@@ -673,8 +963,14 @@ export const AdminPage: React.FC = () => {
                         </td>
 
                         <td className="py-4 px-4 align-top">
-                          <div className="font-serif text-base font-semibold text-[#0B192C]">
-                            {app.fullName}
+                          <div className="flex items-center flex-wrap gap-1.5 font-serif text-base font-semibold text-[#0B192C]">
+                            <span>{app.fullName}</span>
+                            {app.status === 'Shortlisted' && (
+                              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-sans font-bold bg-amber-100 text-amber-900 border border-amber-300 rounded">
+                                <Star className="w-2.5 h-2.5 fill-amber-500 text-amber-600" />
+                                Shortlisted
+                              </span>
+                            )}
                           </div>
                           <div className="space-y-0.5 mt-1 text-stone-600">
                             <a

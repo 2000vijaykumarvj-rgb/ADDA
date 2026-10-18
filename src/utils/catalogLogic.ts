@@ -262,10 +262,17 @@ export function formatSubmissionReference(
   return `${prefix}-${year}-${padded}`;
 }
 
+export type SearchTargetField = 'all' | 'name' | 'phone' | 'email' | 'referenceId';
+export type SortOption = 'newest' | 'oldest' | 'name-asc' | 'name-desc' | 'shortlisted-first';
+
 export interface AdminApplicationFilter {
   searchQuery?: string;
+  searchField?: SearchTargetField;
   statusFilter?: string;
   programFilter?: string;
+  startDate?: string;
+  endDate?: string;
+  sortBy?: SortOption;
 }
 
 /**
@@ -278,33 +285,94 @@ export function filterApplications(
   const status = (filter.statusFilter || 'All').trim();
   const program = (filter.programFilter || 'All').trim();
   const q = (filter.searchQuery || '').trim().toLowerCase();
+  const searchField = filter.searchField || 'all';
+  const startDate = (filter.startDate || '').trim();
+  const endDate = (filter.endDate || '').trim();
+  const sortBy = filter.sortBy || 'newest';
 
-  return applications.filter((app) => {
+  const filtered = applications.filter((app) => {
+    // 1. Status Filter (e.g. Shortlisted, Admitted, etc.)
     if (status !== 'All' && app.status !== status) {
       return false;
     }
+
+    // 2. Program Filter
     if (program !== 'All' && app.programOfInterest !== program) {
       return false;
     }
-    if (!q) {
-      return true;
+
+    // 3. Day-by-Day / Date Range Filter (Start Day & End Day)
+    if (startDate || endDate) {
+      const appDate = (app.submittedAt || '').split('T')[0];
+      if (startDate && appDate < startDate) {
+        return false;
+      }
+      if (endDate && appDate > endDate) {
+        return false;
+      }
     }
 
-    const haystack = [
-      app.referenceId,
-      app.fullName,
-      app.email,
-      app.phone,
-      app.programOfInterest,
-      app.currentQualification,
-      app.status,
-      app.adminNotes || '',
-    ]
-      .join(' ')
-      .toLowerCase();
+    // 4. Targeted Search: Name, Phone, Email, Reference ID, or All
+    if (q) {
+      if (searchField === 'name') {
+        if (!app.fullName.toLowerCase().includes(q)) return false;
+      } else if (searchField === 'phone') {
+        const cleanPhone = (app.phone || '').replace(/[\s\-\+\(\)]/g, '');
+        const cleanQuery = q.replace(/[\s\-\+\(\)]/g, '');
+        if (!cleanPhone.includes(cleanQuery)) return false;
+      } else if (searchField === 'email') {
+        if (!app.email.toLowerCase().includes(q)) return false;
+      } else if (searchField === 'referenceId') {
+        if (!app.referenceId.toLowerCase().includes(q)) return false;
+      } else {
+        // 'all' search
+        const cleanPhone = (app.phone || '').replace(/[\s\-\+\(\)]/g, '');
+        const cleanQuery = q.replace(/[\s\-\+\(\)]/g, '');
+        const haystack = [
+          app.referenceId,
+          app.fullName,
+          app.email,
+          app.phone,
+          app.programOfInterest,
+          app.currentQualification,
+          app.status,
+          app.adminNotes || '',
+        ]
+          .join(' ')
+          .toLowerCase();
 
-    return haystack.includes(q);
+        const matchText = haystack.includes(q);
+        const matchDigits = cleanQuery.length >= 3 && cleanPhone.includes(cleanQuery);
+        if (!matchText && !matchDigits) return false;
+      }
+    }
+
+    return true;
   });
+
+  // 5. Sorting ("Shorting list")
+  filtered.sort((a, b) => {
+    if (sortBy === 'oldest') {
+      return new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime();
+    }
+    if (sortBy === 'name-asc') {
+      return a.fullName.localeCompare(b.fullName);
+    }
+    if (sortBy === 'name-desc') {
+      return b.fullName.localeCompare(a.fullName);
+    }
+    if (sortBy === 'shortlisted-first') {
+      const priority = (st: string) =>
+        st === 'Shortlisted' ? 4 : st === 'Admitted' ? 3 : st === 'Under Review' ? 2 : st === 'New' ? 1 : 0;
+      const diff = priority(b.status) - priority(a.status);
+      if (diff !== 0) return diff;
+      return new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime();
+    }
+    // Default 'newest'
+    return new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime();
+  });
+
+  return filtered;
 }
 
 export interface ApplicationMetrics {

@@ -240,6 +240,27 @@ test('filterApplications, computeApplicationMetrics, and generateApplicationsCsv
   assert.equal(searchDivya.length, 1);
   assert.equal(searchDivya[0].referenceId, 'ABBS-ENQ-2026-0002');
 
+  // Test phone search
+  const phoneSearch = filterApplications(sampleApps, { searchQuery: '98450 44556', searchField: 'phone' });
+  assert.equal(phoneSearch.length, 1);
+  assert.equal(phoneSearch[0].fullName, 'Divya Menon');
+
+  // Test email search
+  const emailSearch = filterApplications(sampleApps, { searchQuery: 'aarav@example.com', searchField: 'email' });
+  assert.equal(emailSearch.length, 1);
+  assert.equal(emailSearch[0].referenceId, 'ABBS-ENQ-2026-0001');
+
+  // Test date filtering (day by day / start day end day)
+  const dateMatch = filterApplications(sampleApps, { startDate: '2026-10-17', endDate: '2026-10-17' });
+  assert.equal(dateMatch.length, 2);
+
+  const dateNoMatch = filterApplications(sampleApps, { startDate: '2026-10-18' });
+  assert.equal(dateNoMatch.length, 0);
+
+  // Test sorting shortlisted-first
+  const sortedShortlist = filterApplications(sampleApps, { sortBy: 'shortlisted-first' });
+  assert.equal(sortedShortlist[0].status, 'Shortlisted');
+
   const csv = generateApplicationsCsv(sampleApps);
   assert.ok(csv.includes('Reference ID,Full Name,Email'));
   assert.ok(csv.includes('ABBS-ENQ-2026-0001,Aarav Kulkarni'));
